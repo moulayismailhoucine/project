@@ -41,8 +41,11 @@ RUN npm run build
 # Run composer autoload (safe at build time — no env needed)
 RUN composer dump-autoload --optimize
 
-# Fix permissions for storage and bootstrap/cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+# Remove .env to avoid conflicts with Render environment variables
+RUN rm -f .env .env.example
+
+# Fix permissions for storage, bootstrap/cache, and public/build
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Copy entrypoint script
