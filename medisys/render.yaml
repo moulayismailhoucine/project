@@ -9,7 +9,7 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: false
+        value: true
       - key: APP_URL
         value: https://medisys-hospital.onrender.com
       - key: DB_CONNECTION
@@ -19,7 +19,7 @@ services:
           name: medisys-db
           property: connectionString
       - key: SESSION_DRIVER
-        value: database
+        value: file
       - key: CACHE_STORE
         value: database
 
