@@ -8,12 +8,6 @@ use Illuminate\Http\Request;
 
 class ContactMessageController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-        $this->middleware('role:admin');
-    }
-
     public function index(Request $request)
     {
         $status = $request->get('status', 'all');

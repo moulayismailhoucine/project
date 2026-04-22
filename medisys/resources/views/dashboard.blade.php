@@ -25,7 +25,11 @@
   </div>
   <div class="stat-card admin-card" id="stat-card-contact-messages" style="display:none;">
     <div class="stat-icon" style="background:linear-gradient(135deg,#e94560,#f43f5e);color:white;"><i class="fas fa-envelope-open-text"></i></div>
-    <div><div class="stat-value" id="stat-contact-messages">—</div><div class="stat-label">Contact Messages</div></div>
+    <div><div class="stat-value" id="stat-contact-messages">-</div><div class="stat-label">Contact Messages</div></div>
+  </div>
+  <div class="stat-card admin-card" id="stat-card-nurses" style="display:none;">
+    <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399);color:white;"><i class="fas fa-user-nurse"></i></div>
+    <div><div class="stat-value" id="stat-nurses">-</div><div class="stat-label">Total Nurses</div></div>
   </div>
 
   <!-- Admin Specific -->
@@ -54,6 +58,11 @@
     <div class="stat-icon" style="background:linear-gradient(135deg,#e94560,#f43f5e);color:white;"><i class="fas fa-hand-holding-usd"></i></div>
     <div><div class="stat-value" id="stat-my-debt">—</div><div class="stat-label">My Debt (DA)</div></div>
   </div>
+</div>
+
+<!-- Alerts Section -->
+<div id="dashboard-alerts-section" style="margin-top:20px;display:none;">
+  <div id="dashboard-alerts-content"></div>
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
@@ -128,6 +137,44 @@
         <tr><th>#</th><th>Doctor</th><th>Specialty</th><th>Ords</th><th>Apps</th><th>Revenue (DA)</th><th>Paid (DA)</th><th>Debt (DA)</th><th>Actions</th></tr>
       </thead>
       <tbody id="ops-doctor-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Nurse Management (Admin only) -->
+<div id="nurse-management-section" class="card" style="margin-top:24px;display:none;">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-user-nurse" style="color:#10b981;margin-right:8px;"></i>Nurse Management</span>
+    <div style="display:flex;gap:10px;">
+      <a href="/admin/nurses/interface" class="btn btn-primary btn-sm"><i class="fas fa-th-large"></i> Nurse Interface</a>
+      <a href="/admin/nurses" class="btn btn-outline btn-sm"><i class="fas fa-list"></i> Simple View</a>
+    </div>
+  </div>
+  <div class="card-body">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:14px;padding:20px 28px;flex:1;min-width:180px;">
+        <div style="font-size:11px;color:#059669;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Total Nurses</div>
+        <div style="font-size:28px;font-weight:800;color:#047857;margin-top:4px;" id="nurse-total-count">-</div>
+        <div style="font-size:12px;color:#059669;margin-top:2px;">registered</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:14px;padding:20px 28px;flex:1;min-width:180px;">
+        <div style="font-size:11px;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Active Nurses</div>
+        <div style="font-size:28px;font-weight:800;color:#15803d;margin-top:4px;" id="nurse-active-count">-</div>
+        <div style="font-size:12px;color:#16a34a;margin-top:2px;">currently active</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:14px;padding:20px 28px;flex:1;min-width:180px;">
+        <div style="font-size:11px;color:#d97706;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Inactive Nurses</div>
+        <div style="font-size:28px;font-weight:800;color:#b45309;margin-top:4px;" id="nurse-inactive-count">-</div>
+        <div style="font-size:12px;color:#d97706;margin-top:2px;">deactivated</div>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>Name</th><th>Email</th><th>Department</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="nurse-management-body">
+        <tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading nurse data...</td></tr>
+      </tbody>
     </table>
   </div>
 </div>
@@ -210,6 +257,7 @@ async function loadDashboard() {
       document.getElementById('stat-card-rev-apps').style.display = '';
       document.getElementById('stat-card-rev-ords').style.display = '';
       document.getElementById('stat-card-rev').style.display = '';
+      document.getElementById('stat-card-nurses').style.display = '';
 
       // Populate values
       document.getElementById('stat-total-apps').textContent = data.total_appointments;
@@ -217,8 +265,14 @@ async function loadDashboard() {
       document.getElementById('stat-rev-ords').textContent = (data.total_ordonnance_revenue || 0).toLocaleString();
       document.getElementById('stat-revenue').textContent = data.total_revenue.toLocaleString();
       document.getElementById('stat-contact-messages').textContent = data.contact_messages_unread;
+      document.getElementById('stat-nurses').textContent = data.nurses_total || 0;
 
       document.getElementById('operations-section').style.display = 'block';
+      document.getElementById('nurse-management-section').style.display = 'block';
+      
+      // Load nurse data
+      loadNurseManagement();
+      
       document.getElementById('ops-total-count').textContent = data.total_ordonnances + data.total_appointments;
       document.getElementById('ops-total-revenue').textContent = data.total_revenue.toLocaleString() + ' DA';
       document.getElementById('ops-total-paid').textContent = data.total_paid.toLocaleString() + ' DA';
@@ -284,6 +338,50 @@ async function loadDashboard() {
   }
 }
 
+async function loadNurseManagement() {
+  try {
+    const r = await fetch('/api/admin/nurses', {headers});
+    const {data} = await r.json();
+    
+    // Update nurse statistics
+    const totalNurses = data.length || 0;
+    const activeNurses = totalNurses; // All nurses are considered active since users table doesn't have is_active
+    const inactiveNurses = 0;
+    
+    document.getElementById('nurse-total-count').textContent = totalNurses;
+    document.getElementById('nurse-active-count').textContent = activeNurses;
+    document.getElementById('nurse-inactive-count').textContent = inactiveNurses;
+    
+    // Populate nurse table
+    const nurseTb = document.getElementById('nurse-management-body');
+    if (data && data.length > 0) {
+      nurseTb.innerHTML = data.slice(0, 5).map((nurse, i) => {
+        return `<tr>
+          <td style="color:#94a3b8;font-size:12px;">${nurse.id}</td>
+          <td style="font-weight:600;">${nurse.name}</td>
+          <td style="color:#64748b;font-size:14px;">${nurse.email}</td>
+          <td><span class="badge badge-info">${nurse.department || 'Not assigned'}</span></td>
+          <td>
+            <span class="badge badge-success">
+              Active
+            </span>
+          </td>
+          <td>
+            <a href="/admin/nurses/${nurse.id}/edit" class="btn btn-sm btn-outline" style="color:#0f3460;border-color:#0f3460;">
+              <i class="fas fa-edit"></i> Edit
+            </a>
+          </td>
+        </tr>`;
+      }).join('');
+    } else {
+      nurseTb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;">No nurses found. <a href="/admin/nurses/create" style="color:#10b981;">Add your first nurse</a></td></tr>';
+    }
+  } catch(e) {
+    console.error('Error loading nurse data:', e);
+    document.getElementById('nurse-management-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#ef4444;">Error loading nurse data</td></tr>';
+  }
+}
+
 async function loadUnavailabilities() {
   const r = await fetch('/api/doctor-unavailabilities', {headers});
   const {data} = await r.json();
@@ -291,8 +389,8 @@ async function loadUnavailabilities() {
   tb.innerHTML = data.map(u => `
     <tr>
       <td>${u.start_date}</td>
-      <td>${u.end_date || '—'}</td>
-      <td>${u.reason || '—'}</td>
+      <td>${u.end_date || 'â'}</td>
+      <td>${u.reason || 'â'}</td>
       <td><button class="btn btn-sm" style="color:#ef4444;background:none;border:none;" onclick="deleteUnavailability(${u.id})"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('');
 }
@@ -378,6 +476,82 @@ loadDashboard = async function() {
 };
 
 loadDashboard();
+
+// Load patient alerts for doctor/admin dashboard
+(async function loadDashboardAlerts() {
+  const section = document.getElementById('dashboard-alerts-section');
+  const container = document.getElementById('dashboard-alerts-content');
+  try {
+    const r = await fetch('/api/alerts/recent', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await r.json();
+    if (data.alerts && data.alerts.length > 0) {
+      let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+      html += '<h3 style="margin:0;font-size:16px;color:#374151;display:flex;align-items:center;gap:8px;"><i class="fas fa-bell" style="color:#ef4444;"></i> Patient Alerts</h3>';
+      html += '<span style="background:#ef4444;color:white;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700;">' + data.unread_count + ' new</span></div>';
+      data.alerts.forEach(alert => {
+        const severity = alert.severity;
+        const bg = severity === 'critical' ? 'linear-gradient(135deg,#fef2f2,#fee2e2)' : 'linear-gradient(135deg,#fffbeb,#fef3c7)';
+        const border = severity === 'critical' ? '#ef4444' : '#f59e0b';
+        const titleColor = severity === 'critical' ? '#991b1b' : '#92400e';
+        const iconBg = severity === 'critical' ? '#fecaca' : '#fde68a';
+        const iconColor = severity === 'critical' ? '#dc2626' : '#d97706';
+        html += '<div style="background:' + bg + ';border-left:4px solid ' + border + ';border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:10px;">';
+        html += '<div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:' + iconBg + ';color:' + iconColor + ';"><i class="fas fa-exclamation-triangle"></i></div>';
+        html += '<div style="flex:1;">';
+        html += '<div style="font-weight:700;font-size:14px;color:' + titleColor + ';margin-bottom:2px;">' + alert.type_label + ' — ' + alert.patient_name + '</div>';
+        html += '<div style="font-size:13px;color:#6b7280;">' + alert.message + '</div>';
+        html += '</div>';
+        html += '<div style="font-size:11px;color:#9ca3af;">' + alert.created_at + '</div>';
+        html += '</div>';
+      });
+      container.innerHTML = html;
+      section.style.display = 'block';
+    } else {
+      section.style.display = 'none';
+    }
+  } catch(e) {
+    console.error('Error loading alerts:', e);
+  }
+})();
 </script>
+
+<!-- AI Chat Bot Floating Action Button -->
+<style>
+.fab-chat {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #0f3460, #533483);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(15, 52, 96, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  text-decoration: none;
+}
+.fab-chat:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(15, 52, 96, 0.4);
+}
+.fab-chat i {
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+</style>
+
+<a href="/medical-chat" class="fab-chat" title="AI Medical Assistant">
+  <i class="fas fa-robot"></i>
+</a>
+
 @endpush
 @endsection

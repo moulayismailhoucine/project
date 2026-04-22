@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('code')->nullable()->unique();
-            $table->enum('role', ['admin', 'doctor', 'patient', 'pharmacy', 'lab'])->default('doctor')->change();
+            $table->enum('role', ['admin', 'doctor', 'nurse', 'patient', 'pharmacy', 'lab'])->default('doctor')->change();
         });
     }
 
@@ -24,7 +24,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('code');
-            $table->enum('role', ['admin', 'doctor'])->default('doctor')->change();
+            $table->enum('role', ['admin', 'doctor', 'patient', 'pharmacy', 'lab'])->default('doctor')->change();
         });
     }
 };

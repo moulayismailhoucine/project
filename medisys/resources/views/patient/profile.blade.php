@@ -104,6 +104,9 @@ input[type="file"] { display: none; }
     </div>
   </div>
   <div class="top-actions">
+    <a href="/medical-chat" class="btn-circle" style="text-decoration:none; display:flex; align-items:center; justify-content:center;" title="AI Medical Assistant">
+      <i class="fas fa-robot"></i>
+    </a>
     <button class="btn-circle" onclick="toggleLang()" id="lang-btn">AR</button>
     <button class="btn-circle" onclick="toggleTheme()" id="theme-btn"><i class="fas fa-moon"></i></button>
     <button class="btn-logout" onclick="logoutPatient()"><i class="fas fa-sign-out-alt"></i> <span data-i18n="Logout">Logout</span></button>
@@ -149,8 +152,10 @@ input[type="file"] { display: none; }
     <div class="tab-row">
       <button class="tab active" onclick="showTab('appointments')"><i class="fas fa-calendar-check"></i> <span data-i18n="My Appointments">My Appointments</span></button>
       <button class="tab" onclick="showTab('ordonnances')"><i class="fas fa-prescription"></i> <span data-i18n="My Prescriptions">My Prescriptions</span></button>
+      <button class="tab" onclick="showTab('vitals')"><i class="fas fa-heartbeat"></i> <span data-i18n="Vitals">Vitals</span></button>
       <button class="tab" onclick="showTab('history')"><i class="fas fa-history"></i> <span data-i18n="Medical History">Medical History</span></button>
       <button class="tab" onclick="showTab('labresults')"><i class="fas fa-flask"></i> <span data-i18n="Lab Results">Lab Results</span></button>
+      <button class="tab" onclick="showTab('recommendations')"><i class="fas fa-lightbulb"></i> <span data-i18n="Recommendations">Recommendations</span></button>
     </div>
 
     <!-- Appointments Tab -->
@@ -178,6 +183,17 @@ input[type="file"] { display: none; }
       <div id="ord-container"><div style="text-align:center;padding:24px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div></div>
     </div>
 
+    <!-- Vitals Tab -->
+    <div id="tab-vitals" class="tab-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:700;" data-i18n="Vitals History">Vitals History</div>
+        <a href="/vitals/create/{{ patientId }}" class="btn-book" style="text-decoration:none;"><i class="fas fa-plus"></i> <span data-i18n="Add Vitals">Add Vitals</span></a>
+      </div>
+      <div id="vitals-container">
+        <div style="text-align:center;padding:24px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div>
+      </div>
+    </div>
+
     <!-- Medical History Tab -->
     <div id="tab-history" class="tab-content">
       <table class="data-table">
@@ -197,6 +213,13 @@ input[type="file"] { display: none; }
     <!-- Lab Results Tab -->
     <div id="tab-labresults" class="tab-content">
       <div id="lab-results-container">
+        <div style="text-align:center;padding:24px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div>
+      </div>
+    </div>
+
+    <!-- Recommendations Tab -->
+    <div id="tab-recommendations" class="tab-content">
+      <div id="recommendations-container">
         <div style="text-align:center;padding:24px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div>
       </div>
     </div>
@@ -244,7 +267,8 @@ const translations = {
     "Appointment booked!": "تم حجز الموعد!", "Please select a doctor and date.": "يرجى اختيار الطبيب والتاريخ.",
     "No appointments scheduled": "لا توجد مواعيد مجدولة", "No prescriptions found": "لا توجد وصفات طبية",
     "No medical history": "لا يوجد سجل طبي", "No lab results uploaded yet": "لا توجد نتائج مختبر مرفوعة بعد",
-    "pending": "قيد الانتظار", "confirmed": "مؤكد", "completed": "مكتمل", "cancelled": "ملغي"
+    "pending": "pending", "confirmed": "confirmed", "completed": "completed", "cancelled": "cancelled",
+    "Vitals": "Vital Signs", "Vitals History": "Vitals History", "Add Vitals": "Add Vitals"
   }
 };
 
@@ -303,6 +327,8 @@ function showTab(name) {
   document.getElementById('tab-' + name).classList.add('active');
   event.target.classList.add('active');
   if (name === 'labresults') loadLabResults();
+  if (name === 'recommendations') loadRecommendations();
+  if (name === 'vitals') loadVitals();
 }
 
 async function loadLabResults() {
@@ -329,6 +355,17 @@ async function loadLabResults() {
         </div>`).join('') + `</div>`;
   } catch(e) {
     container.innerHTML = '<div style="text-align:center;padding:24px;color:#e94560;">Error loading lab results.</div>';
+  }
+}
+
+async function loadVitals() {
+  const container = document.getElementById('vitals-container');
+  try {
+    const r = await fetch(`/vitals/${patientId}`, {headers: h});
+    const html = await r.text();
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:#e94560;">Error loading vitals.</div>';
   }
 }
 
@@ -368,6 +405,7 @@ async function loadProfile() {
     // Load ordonnances separately
     loadOrdonnances();
     loadDoctors();
+    loadRecommendations();
 
   } catch(e) {
     console.error(e);
@@ -428,6 +466,32 @@ async function loadOrdonnances() {
           </div>
         </div>
         ${o.instructions ? `<div style="background:#fffbeb;color:#92400e;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;"><i class="fas fa-info-circle"></i> ${o.instructions}</div>` : ''}
+        ${o.explanation ? `
+          <div style="background:#f0fdf4;color:#166534;padding:12px 16px;border-radius:12px;margin-bottom:14px;border-left:4px solid #22c55e;">
+            <div style="display:flex;align-items:center;margin-bottom:8px;">
+              <i class="fas fa-robot" style="color:#22c55e;margin-right:8px;"></i>
+              <strong style="color:#166534;">${currentLang==='ar'?'AI Explanation':'AI Explanation'}</strong>
+              ${!o.explanation_generated ? `<span style="margin-left:8px;font-size:11px;color:#f59e0b;">(${currentLang==='ar'?'Being generated':'Being generated'})</span>` : ''}
+            </div>
+            <div style="font-size:13px;line-height:1.6;color:#15803d;">${o.explanation}</div>
+          </div>
+        ` : o.explanation_generated === false ? `
+          <div style="background:#fef2f2;color:#dc2626;padding:12px 16px;border-radius:12px;margin-bottom:14px;border-left:4px solid #ef4444;">
+            <div style="display:flex;align-items:center;">
+              <i class="fas fa-exclamation-triangle" style="color:#ef4444;margin-right:8px;"></i>
+              <strong style="color:#dc2626;">${currentLang==='ar'?'AI Explanation Unavailable':'AI Explanation Unavailable'}</strong>
+            </div>
+            <div style="font-size:12px;color:#991b1b;margin-top:4px;">${currentLang==='ar'?'Unable to generate explanation at this time':'Unable to generate explanation at this time'}</div>
+          </div>
+        ` : `
+          <div style="background:#f8fafc;color:#64748b;padding:12px 16px;border-radius:12px;margin-bottom:14px;border-left:4px solid #cbd5e1;">
+            <div style="display:flex;align-items:center;">
+              <i class="fas fa-clock" style="color:#94a3b8;margin-right:8px;"></i>
+              <strong style="color:#64748b;">${currentLang==='ar'?'AI Explanation':'AI Explanation'}</strong>
+            </div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${currentLang==='ar'?'Generating explanation...':'Generating explanation...'}</div>
+          </div>
+        `}
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           ${(o.medications||[]).map(m => `
             <div class="med-chip">
@@ -450,6 +514,74 @@ async function toggleTaken(id) {
       loadOrdonnances();
     }
   } catch(e) {}
+}
+
+function loadRecommendations() {
+  const container = document.getElementById('recommendations-container');
+  const emptyMsg = currentLang === 'ar' ? 'لا توجد توصيات' : 'No recommendations found';
+  
+  if (container) {
+    container.innerHTML = `<div style="text-align:center;padding:24px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div>`;
+    
+    fetch(`/api/patients/${patientId}/recommendations`, {
+      method: 'GET',
+      headers: h
+    }).then(r => r.json())
+    .then(data => {
+      if (data.success && data.data && data.data.length > 0) {
+        container.innerHTML = data.data.map(rec => `
+          <div class="rec-card" style="border-left:4px solid ${rec.priority === 'urgent' ? '#dc2626' : rec.priority === 'high' ? '#f59e0b' : '#3b82f6'};">
+            <div class="rec-header">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:14px;font-weight:700;color:var(--text-main);">
+                  ${currentLang === 'ar' ? 'التوصيات' : 'Recommendations'}
+                </div>
+                <span class="priority-badge ${rec.priority}">
+                  ${rec.priority}
+                </span>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);">
+                ${new Date(rec.created_at).toLocaleDateString()}
+              </div>
+            </div>
+            <div style="background:#fffbeb;color:#92400e;padding:12px;border-radius:8px;margin-bottom:12px;">
+              <div style="display:flex;align-items:center;margin-bottom:8px;">
+                <i class="fas fa-lightbulb" style="color:#f59e0b;margin-right:8px;"></i>
+                <strong style="color:#92400e;">${currentLang === 'ar' ? 'اقتراح الأطباء' : 'Recommended Doctors'}</strong>
+              </div>
+              <div style="font-size:13px;line-height:1.6;">
+                ${(rec.recommended_doctors || []).map(doc => `<span class="doctor-tag">${doc}</span>`).join(' ')}
+              </div>
+            </div>
+            <div style="background:#f0fdf4;color:#166534;padding:12px;border-radius:8px;margin-bottom:12px;">
+              <div style="display:flex;align-items:center;margin-bottom:8px;">
+                <i class="fas fa-vial" style="color:#22c55e;margin-right:8px;"></i>
+                <strong style="color:#166534;">${currentLang === 'ar' ? 'الاختبارات الموصى بها' : 'Recommended Tests'}</strong>
+              </div>
+              <div style="font-size:13px;line-height:1.6;">
+                ${(rec.recommended_tests || []).map(test => `<span class="test-tag">${test}</span>`).join(' ')}
+              </div>
+            </div>
+            <div style="background:#f8fafc;color:#64748b;padding:12px;border-radius:8px;margin-bottom:12px;">
+              <div style="display:flex;align-items:center;margin-bottom:8px;">
+                <i class="fas fa-brain" style="color:#94a3b8;margin-right:8px;"></i>
+                <strong style="color:#64748b;">${currentLang === 'ar' ? 'السبب' : 'AI Reasoning'}</strong>
+              </div>
+              <div style="font-size:12px;color:#15803d;line-height:1.6;">
+                ${rec.reasoning || 'No reasoning provided'}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = `<div style="text-align:center;padding:24px;color:#94a3b8;">${emptyMsg}</div>`;
+      }
+    })
+    .catch(e => {
+      console.error('Recommendations load error:', e);
+      container.innerHTML = `<div style="text-align:center;padding:24px;color:#e94560;">${currentLang === 'ar' ? 'خطأ في التحميل' : 'Error loading recommendations'}</div>`;
+    });
+  }
 }
 
 function renderHistory(records, ords) {
@@ -537,6 +669,13 @@ async function uploadPhoto(input) {
 // Set default datetime for booking
 const nowStr = new Date(Date.now() + 3600000).toISOString().slice(0,16);
 document.getElementById('book-date').value = nowStr;
+
+// Periodic refresh for AI explanations
+setInterval(() => {
+  if (document.visibilityState === 'visible') {
+    loadOrdonnances(); // Refresh prescriptions to check for updated explanations
+  }
+}, 30000); // Check every 30 seconds
 
 // Init
 loadProfile();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
+use App\Services\RecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -129,5 +130,28 @@ class PatientController extends Controller
             'success' => true,
             'data'    => $patient->load(['medicalRecords.doctor.user', 'ordonnances', 'appointments.doctor.user']),
         ]);
+    }
+
+    /**
+     * Get recommendations for a patient
+     */
+    public function recommendations(Patient $patient)
+    {
+        try {
+            $recommendationService = new RecommendationService();
+            $result = $recommendationService->generateRecommendations($patient);
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => $result['data'] ?? []
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate recommendations: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

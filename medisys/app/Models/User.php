@@ -18,6 +18,7 @@ class User extends Authenticatable
         'password',
         'role',
         'code',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -71,5 +72,10 @@ class User extends Authenticatable
     public function laboratory()
     {
         return $this->hasOne(Laboratory::class);
+    }
+
+    public function nurse()
+    {
+        return $this->hasOne(Nurse::class);
     }
 }

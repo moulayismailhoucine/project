@@ -17,7 +17,11 @@ class RoleMiddleware
         $user = $request->user();
 
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+            // For web routes, redirect to login
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+            }
+            return redirect()->route('login')->with('error', 'Please login to access this page.');
         }
 
         // Users (admin/doctor) have a 'role' attribute
@@ -27,9 +31,15 @@ class RoleMiddleware
             }
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => "Access denied. Required role: {$role}.",
-        ], 403);
+        // For web routes, show access denied page or redirect
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => "Access denied. Required role: {$role}.",
+            ], 403);
+        }
+        
+        // For web routes, abort with 403 or redirect to dashboard
+        abort(403, "Access denied. Required role: {$role}.");
     }
 }

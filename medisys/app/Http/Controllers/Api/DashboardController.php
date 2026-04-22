@@ -9,6 +9,7 @@ use App\Models\MedicalRecord;
 use App\Models\Appointment;
 use App\Models\Ordonnance;
 use App\Models\ContactMessage;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
@@ -51,6 +52,16 @@ class DashboardController extends Controller
 
         $unreadContactMessages = ContactMessage::where('status', 'new')->count();
         $totalContactMessages = ContactMessage::count();
+        
+        // Nurse statistics
+        $totalNurses = User::where('role', 'nurse')->count();
+        $activeNurses = User::where('role', 'nurse')->count(); // All nurses are considered active since users table doesn't have is_active
+        
+        // Suspicious bookings
+        $suspiciousAppointments = Appointment::where('is_suspicious', true)
+            ->with(['patient', 'doctor.user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         $stats = [
             'patients'      => Patient::count(),
@@ -61,6 +72,8 @@ class DashboardController extends Controller
             'pending_appointments' => Appointment::where('status', 'pending')->count(),
             'total_ordonnances' => $totalOrdsCount,
             'total_appointments' => $totalAppsCount,
+            'totalContactMessages' => $totalContactMessages,
+            'suspicious_bookings' => $suspiciousAppointments->count(),
             'total_ordonnance_revenue' => $totalOrdsCount * self::OPERATION_PRICE,
             'total_appointment_revenue' => $totalAppsCount * self::APPOINTMENT_PRICE,
             'total_revenue'     => $totalRevenue,
@@ -68,6 +81,8 @@ class DashboardController extends Controller
             'total_debt'        => $totalDebt,
             'contact_messages_unread' => $unreadContactMessages,
             'contact_messages_total'  => $totalContactMessages,
+            'nurses_total'     => $totalNurses,
+            'nurses_active'    => $activeNurses,
             'prices' => [
                 'ordonnance'  => self::OPERATION_PRICE,
                 'appointment' => self::APPOINTMENT_PRICE

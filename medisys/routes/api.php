@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\LabResultController;
 use App\Http\Controllers\Api\DoctorUnavailabilityController;
+use App\Http\Controllers\GoogleAIController;
 
 // ── Public ──────────────────────────────────────────────
 Route::post('/login',      [AuthController::class, 'login']);
@@ -22,6 +23,7 @@ Route::get('/public/available-slots', [AppointmentController::class, 'getAvailab
 Route::post('/public/book-appointment', [AppointmentController::class, 'publicBook'])
     ->middleware(['throttle:5,1', 'suspicious.booking']);
 
+Route::post('/medical-chat', [GoogleAIController::class, 'sendMessage']);
 // Patient lookup by NFC UID — no token creation, safe for pharmacy/lab sessions
 Route::middleware(['auth:sanctum'])->post('/nfc-lookup', [AuthController::class, 'nfcLookup']);
 
@@ -38,12 +40,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Patients
     Route::apiResource('patients', PatientController::class);
     Route::get('/patients/{patient}/history', [PatientController::class, 'history']);
+    Route::get('/patients/{patient}/recommendations', [PatientController::class, 'recommendations']);
 
-    // Medical Records
-    Route::apiResource('medical-records', MedicalRecordController::class);
+    // Medical Records (read for all, delete for admins and doctors only)
+    Route::get('/medical-records', [MedicalRecordController::class, 'index']);
+    Route::get('/medical-records/{medicalRecord}', [MedicalRecordController::class, 'show']);
+    Route::post('/medical-records', [MedicalRecordController::class, 'store']);
+    Route::put('/medical-records/{medicalRecord}', [MedicalRecordController::class, 'update']);
+    Route::middleware(['role:admin,doctor'])->group(function () {
+        Route::delete('/medical-records/{medicalRecord}', [MedicalRecordController::class, 'destroy']);
+    });
 
-    // Ordonnances
-    Route::apiResource('ordonnances', OrdonnanceController::class);
+    // Ordonnances (read for all, create/update for doctors and admins only)
+    Route::get('/ordonnances', [OrdonnanceController::class, 'index']);
+    Route::get('/ordonnances/{ordonnance}', [OrdonnanceController::class, 'show']);
+    Route::middleware(['role:doctor,admin'])->group(function () {
+        Route::post('/ordonnances', [OrdonnanceController::class, 'store']);
+        Route::put('/ordonnances/{ordonnance}', [OrdonnanceController::class, 'update']);
+        Route::delete('/ordonnances/{ordonnance}', [OrdonnanceController::class, 'destroy']);
+    });
     Route::get('/ordonnances/{ordonnance}/pdf', [OrdonnanceController::class, 'generatePdf']);
     Route::post('/ordonnances/by-nfc', [OrdonnanceController::class, 'byNfcUid']);
     Route::patch('/ordonnances/{ordonnance}/dispense', [OrdonnanceController::class, 'dispense']);
@@ -85,7 +100,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/doctors/{doctor}', [DoctorController::class, 'destroy']);
         Route::apiResource('pharmacies', PharmacyController::class);
         Route::apiResource('laboratories', LaboratoryController::class);
+        
+        // Nurse management
+        Route::get('/admin/nurses/statistics', [App\Http\Controllers\Api\Admin\NurseController::class, 'statistics']);
+        Route::get('/admin/nurses', [App\Http\Controllers\Api\Admin\NurseController::class, 'index']);
+        Route::get('/admin/nurses/{id}', [App\Http\Controllers\Api\Admin\NurseController::class, 'show']);
+        Route::post('/admin/nurses', [App\Http\Controllers\Api\Admin\NurseController::class, 'store']);
+        Route::put('/admin/nurses/{id}', [App\Http\Controllers\Api\Admin\NurseController::class, 'update']);
+        Route::delete('/admin/nurses/{id}', [App\Http\Controllers\Api\Admin\NurseController::class, 'destroy']);
     });
+
 });
 
 // ── Patient (NFC authenticated) ──────────────────────────

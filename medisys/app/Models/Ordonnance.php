@@ -26,6 +26,8 @@ class Ordonnance extends Model
         'dispensed_by',
         'dispensed_at',
         'dispensed_note',
+        'explanation',
+        'explanation_generated',
     ];
 
     protected $casts = [
@@ -34,6 +36,7 @@ class Ordonnance extends Model
         'valid_until'  => 'date',
         'is_taken'     => 'boolean',
         'dispensed_at' => 'datetime',
+        'explanation_generated' => 'boolean',
     ];
 
     public function dispensedBy()

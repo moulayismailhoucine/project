@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', 'SHIFA') — Hospital Management</title>
 <meta name="description" content="SHIFA — Complete Hospital & Clinic Management System">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -262,6 +263,11 @@ table.data-table tr:hover td { background: #fafbff; }
         <span class="icon"><i class="fas fa-shield-alt"></i></span> {{ __('Fraud Attempts') }}
       </a>
     </div>
+    <div class="nav-item admin-only" style="display:none;">
+      <a href="/admin/nurses" class="nav-link {{ request()->is('admin/nurses*') ? 'active' : '' }}" id="nav-nurses">
+        <span class="icon"><i class="fas fa-user-nurse"></i></span> {{ __('Nurses') }}
+      </a>
+    </div>
     <div class="nav-item">
       <a href="/doctors" class="nav-link {{ request()->is('doctors*') ? 'active' : '' }}" id="nav-doctors">
         <span class="icon"><i class="fas fa-user-md"></i></span> {{ __('Doctors') }}
@@ -408,6 +414,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.querySelectorAll('#nav-doctors, #nav-pharmacies, #nav-laboratories')
           .forEach(el => el.style.display = 'none');
+      } else if (user.role === 'nurse') {
+        // Nurse: hide admin items and restricted navigation
+        document.querySelectorAll('.admin-only').forEach(el => {
+          el.style.display = 'none';
+        });
+        // Hide Clinical section items (Medical Records, Prescriptions)
+        document.querySelectorAll('#nav-records, #nav-ordonnances')
+          .forEach(el => el.parentElement.style.display = 'none');
+        // Hide Appointments
+        document.querySelectorAll('#nav-appointments')
+          .forEach(el => el.parentElement.style.display = 'none');
+        // Hide Administration section items (Doctors, Pharmacies, Laboratories)
+        document.querySelectorAll('#nav-doctors, #nav-pharmacies, #nav-laboratories')
+          .forEach(el => el.parentElement.style.display = 'none');
       } else {
         // Other roles: hide admin items
         document.querySelectorAll('.admin-only').forEach(el => {

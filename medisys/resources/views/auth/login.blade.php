@@ -148,6 +148,9 @@ body {
       <a href="/contact" style="display:inline-block; margin-top:16px; color:#64748b; font-size:13px; text-decoration:none; font-weight:600; transition:color 0.2s;" onmouseover="this.style.color='#0f3460'" onmouseout="this.style.color='#64748b'">
         <i class="fas fa-envelope"></i> Contact Support
       </a>
+      <a href="/medical-chat" style="display:inline-block; margin-top:16px; color:#64748b; font-size:13px; text-decoration:none; font-weight:600; transition:color 0.2s;" onmouseover="this.style.color='#0f3460'" onmouseout="this.style.color='#64748b'">
+        <i class="fas fa-robot"></i> AI Medical Chat
+      </a>
     </div>
   </div>
 </div>
@@ -178,6 +181,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
   try {
     const resp = await fetch('/api/login', {
       method: 'POST',
+      credentials: 'include',
       headers: {'Content-Type':'application/json','Accept':'application/json'},
       body: JSON.stringify({
         login: document.getElementById('login').value,

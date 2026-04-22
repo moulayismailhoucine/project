@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Patient;
+use App\Services\BookingFraudService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AppointmentController extends Controller
 {
@@ -68,12 +70,32 @@ class AppointmentController extends Controller
             }
         }
 
+        // Get client IP address for fraud detection
+        $clientIp = $request->ip();
+        
         $appointment = Appointment::create($validated);
-
+        
+        // Detect fraud
+        $fraudService = new BookingFraudService();
+        $fraudResult = $fraudService->detectFraud(
+            $clientIp,
+            $input['patient_email'] ?? '',
+            $input['patient_phone'] ?? '',
+            $input['patient_id'] ?? null
+        );
+        
+        // Update appointment with fraud detection results
+        $appointment->update([
+            'is_suspicious' => $fraudResult['is_suspicious'],
+            'fraud_score' => $fraudResult['fraud_score'],
+            'fraud_reason' => $fraudResult['indicators'][0]['reason'] ?? null
+        ]);
+        
         return response()->json([
             'success' => true,
             'message' => 'Appointment scheduled.',
             'data'    => $appointment->load(['patient', 'doctor.user']),
+            'fraud_detection' => $fraudResult
         ], 201);
     }
 

@@ -67,4 +67,24 @@ class Patient extends Authenticatable
     {
         return $this->hasMany(LabResult::class);
     }
+
+    public function vitals()
+    {
+        return $this->hasMany(Vital::class);
+    }
+
+    public function nurseNotes()
+    {
+        return $this->hasMany(NurseNote::class);
+    }
+
+    public function alerts()
+    {
+        return $this->hasMany(Alert::class)->orderBy('created_at', 'desc');
+    }
+
+    public function latestVital()
+    {
+        return $this->hasOne(Vital::class)->latestOfMany();
+    }
 }

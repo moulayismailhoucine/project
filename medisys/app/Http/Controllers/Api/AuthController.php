@@ -37,6 +37,10 @@ class AuthController extends Controller
             ], 401);
         }
 
+        // Establish web session so auth-protected routes work
+        Auth::login($user);
+        $request->session()->regenerate();
+
         // Revoke old tokens
         $user->tokens()->delete();
 

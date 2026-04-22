@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\GeneratePrescriptionExplanationJob;
 use App\Models\Ordonnance;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Bus;
 
 class OrdonnanceController extends Controller
 {
@@ -61,9 +63,12 @@ class OrdonnanceController extends Controller
             'status'    => 'active',
         ]));
 
+        // Dispatch AI explanation job asynchronously
+        GeneratePrescriptionExplanationJob::dispatch($ordonnance);
+
         return response()->json([
             'success' => true,
-            'message' => 'Prescription created.',
+            'message' => 'Prescription created. AI explanation is being generated.',
             'data'    => $ordonnance->load(['patient', 'doctor.user']),
         ], 201);
     }

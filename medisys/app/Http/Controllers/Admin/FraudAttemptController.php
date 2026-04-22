@@ -8,12 +8,6 @@ use Illuminate\Http\Request;
 
 class FraudAttemptController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-        $this->middleware('role:admin');
-    }
-
     public function index(Request $request)
     {
         $reason = $request->get('reason', 'all');

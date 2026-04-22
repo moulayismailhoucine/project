@@ -45,6 +45,15 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // ── Nurses ────────────────────────────────────────────────
+        User::create([
+            'name'     => 'Head Nurse Sarah',
+            'email'    => 'nurse@shifa.local',
+            'username' => 'nurse',
+            'password' => Hash::make('Nurse@1234'),
+            'role'     => 'nurse',
+        ]);
+
         // ── Patients ───────────────────────────────────────────────
         $patients = [
             ['name' => 'Mohammed Amine',  'age' => 34, 'gender' => 'male',   'nfc_uid' => 'NFC001ABC'],

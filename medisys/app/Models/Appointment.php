@@ -16,6 +16,9 @@ class Appointment extends Model
         'reason',
         'status',
         'notes',
+        'is_suspicious',
+        'fraud_score',
+        'fraud_reason',
     ];
 
     protected $casts = [
