@@ -37,9 +37,11 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Establish web session so auth-protected routes work
-        Auth::login($user);
-        $request->session()->regenerate();
+        // Establish web session only when running in web context (has session middleware)
+        if ($request->hasSession()) {
+            Auth::login($user);
+            $request->session()->regenerate();
+        }
 
         // Revoke old tokens
         $user->tokens()->delete();
