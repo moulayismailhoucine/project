@@ -35,11 +35,8 @@ RUN npm install && npm run build
 # Copy the rest of the application
 COPY . .
 
-# Run composer autoload and Laravel optimizations
-RUN composer dump-autoload --optimize \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+# Run composer autoload (safe at build time — no env needed)
+RUN composer dump-autoload --optimize
 
 # Fix permissions for storage and bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
