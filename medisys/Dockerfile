@@ -28,22 +28,26 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-autoloader
 
-# Copy package files and install/build Node assets
+# Copy package files and install Node dependencies
 COPY package.json package-lock.json ./
-RUN npm install && npm run build
+RUN npm install
 
 # Copy the rest of the application
 COPY . .
 
-# Run composer autoload and Laravel optimizations
-RUN composer dump-autoload --optimize \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+# Build Node assets (needs resources/ to exist)
+RUN npm run build
+
+# Run composer autoload (safe at build time — no env needed)
+RUN composer dump-autoload --optimize
 
 # Fix permissions for storage and bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Update Apache DocumentRoot to point to Laravel's public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
@@ -56,5 +60,5 @@ RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 # Expose port 80
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Use entrypoint to run migrations then start Apache
+ENTRYPOINT ["/entrypoint.sh"]

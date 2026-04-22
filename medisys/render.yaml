@@ -3,8 +3,6 @@ services:
     name: medisys-hospital
     env: docker
     plan: free
-    buildCommand: ./render-build.sh
-    startCommand: php artisan migrate --force && apache2-foreground
     envVars:
       - key: APP_KEY
         generateValue: true
