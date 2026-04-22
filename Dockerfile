@@ -28,12 +28,15 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-autoloader
 
-# Copy package files and install/build Node assets
+# Copy package files and install Node dependencies
 COPY package.json package-lock.json ./
-RUN npm install && npm run build
+RUN npm install
 
 # Copy the rest of the application
 COPY . .
+
+# Build Node assets (needs resources/ to exist)
+RUN npm run build
 
 # Run composer autoload (safe at build time — no env needed)
 RUN composer dump-autoload --optimize
