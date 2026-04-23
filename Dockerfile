@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
-    libonig-dev \
+    libonig-dev \git add .gitattributes Dockerfile
     libxml2-dev \
     zip \
     unzip \
