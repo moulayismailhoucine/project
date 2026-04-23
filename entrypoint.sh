@@ -22,64 +22,37 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || 
     echo "Waiting for database..."
     i=0
     while [ $i -lt 30 ]; do
-        php artisan migrate --force 2>/dev/null && break
+        php artisan tinker --execute="echo 'DB_OK';" 2>/dev/null && break
         echo "DB not ready, retrying in 2s... ($i/30)"
         sleep 2
         i=$((i + 1))
     done
 
     if [ $i -eq 30 ]; then
-        echo "WARNING: Database not ready after 60 seconds. Attempting recovery..."
-
-        # Fix: If base migrations failed because tables already exist, mark them as run
-        echo "Checking migration table state..."
-        php artisan tinker --execute="
-            use Illuminate\Support\Facades\DB;
-            use Illuminate\Support\Facades\Schema;
-
-            \$baseMigrations = [
-                '0001_01_01_000000_create_users_table',
-                '0001_01_01_000001_create_cache_table',
-                '0001_01_01_000002_create_jobs_table',
-            ];
-
-            foreach (\$baseMigrations as \$migration) {
-                \$exists = DB::table('migrations')->where('migration', \$migration)->exists();
-                if (!\$exists) {
-                    DB::table('migrations')->insert(['migration' => \$migration, 'batch' => 1]);
-                    echo \"Marked \$migration as run.\\n\";
-                }
-            }
-            echo \"Migration table fixed.\";
-        " 2>/dev/null || echo "Could not fix migrations table, continuing..."
-
-        # Now try migrations again
-        php artisan migrate --force 2>/dev/null && echo "Migrations succeeded after fix." || echo "Migrations still failing, continuing..."
+        echo "WARNING: Database not accessible after 60 seconds."
     else
-        echo "Migrations complete."
+        echo "Database is ready."
     fi
 
-    # Fix: Manually add username column if it still doesn't exist
-    echo "Checking for username column..."
-    php artisan tinker --execute="
-        use Illuminate\Support\Facades\DB;
-        use Illuminate\Support\Facades\Schema;
-        if (!Schema::hasColumn('users', 'username')) {
-            DB::statement('ALTER TABLE users ADD COLUMN username VARCHAR(255) UNIQUE NULL');
-            echo \"Username column added manually.\";
-        } else {
-            echo \"Username column already exists.\";
-        }
-    " 2>/dev/null || echo "Could not check/add username column, continuing..."
-
-    # Seed only if users table is empty (first deploy)
+    # Check if this is a fresh/empty database (no users)
     USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
+    echo "User count: $USER_COUNT"
+
     if [ "$USER_COUNT" = "0" ] || [ "$USER_COUNT" = "" ]; then
-        echo "No users found. Running seeders..."
-        php artisan db:seed --force 2>/dev/null || echo "Seeding failed, continuing..."
+        echo "Fresh database detected. Running migrate:fresh --force..."
+        php artisan migrate:fresh --force 2>/dev/null && echo "Migrations fresh complete." || echo "migrate:fresh failed, trying migrate --force..."
+        # If fresh failed, try normal migrate as fallback
+        if [ $? -ne 0 ]; then
+            php artisan migrate --force 2>/dev/null && echo "Migrations complete." || echo "Migrations failed."
+        fi
+        # Seed after fresh migrate
+        echo "Running seeders..."
+        php artisan db:seed --force 2>/dev/null && echo "Seeding complete." || echo "Seeding failed, continuing..."
     else
-        echo "Users already exist ($USER_COUNT). Skipping seeders."
+        echo "Existing database detected ($USER_COUNT users). Running migrate --force..."
+        php artisan migrate --force 2>/dev/null && echo "Migrations complete." || echo "Migrations failed, continuing..."
     fi
+
     php artisan config:cache 2>/dev/null || echo "config:cache skipped"
     php artisan route:cache 2>/dev/null || echo "route:cache skipped"
     php artisan view:cache 2>/dev/null || echo "view:cache skipped"
