@@ -29,35 +29,60 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || 
     done
 
     if [ $i -eq 30 ]; then
-        echo "WARNING: Database not ready after 60 seconds. Migrations skipped."
-    else
-        echo "Migrations complete."
+        echo "WARNING: Database not ready after 60 seconds. Attempting recovery..."
 
-        # Fix: Manually add username column if it still doesn't exist
-        echo "Checking for username column..."
+        # Fix: If base migrations failed because tables already exist, mark them as run
+        echo "Checking migration table state..."
         php artisan tinker --execute="
             use Illuminate\Support\Facades\DB;
             use Illuminate\Support\Facades\Schema;
-            if (!Schema::hasColumn('users', 'username')) {
-                DB::statement('ALTER TABLE users ADD COLUMN username VARCHAR(255) UNIQUE NULL');
-                echo \"Username column added manually.\";
-            } else {
-                echo \"Username column already exists.\";
-            }
-        " 2>/dev/null || echo "Could not check/add username column, continuing..."
 
-        # Seed only if users table is empty (first deploy)
-        USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
-        if [ "$USER_COUNT" = "0" ] || [ "$USER_COUNT" = "" ]; then
-            echo "No users found. Running seeders..."
-            php artisan db:seed --force 2>/dev/null || echo "Seeding failed, continuing..."
-        else
-            echo "Users already exist ($USER_COUNT). Skipping seeders."
-        fi
-        php artisan config:cache 2>/dev/null || echo "config:cache skipped"
-        php artisan route:cache 2>/dev/null || echo "route:cache skipped"
-        php artisan view:cache 2>/dev/null || echo "view:cache skipped"
+            \$baseMigrations = [
+                '0001_01_01_000000_create_users_table',
+                '0001_01_01_000001_create_cache_table',
+                '0001_01_01_000002_create_jobs_table',
+            ];
+
+            foreach (\$baseMigrations as \$migration) {
+                \$exists = DB::table('migrations')->where('migration', \$migration)->exists();
+                if (!\$exists) {
+                    DB::table('migrations')->insert(['migration' => \$migration, 'batch' => 1]);
+                    echo \"Marked \$migration as run.\\n\";
+                }
+            }
+            echo \"Migration table fixed.\";
+        " 2>/dev/null || echo "Could not fix migrations table, continuing..."
+
+        # Now try migrations again
+        php artisan migrate --force 2>/dev/null && echo "Migrations succeeded after fix." || echo "Migrations still failing, continuing..."
+    else
+        echo "Migrations complete."
     fi
+
+    # Fix: Manually add username column if it still doesn't exist
+    echo "Checking for username column..."
+    php artisan tinker --execute="
+        use Illuminate\Support\Facades\DB;
+        use Illuminate\Support\Facades\Schema;
+        if (!Schema::hasColumn('users', 'username')) {
+            DB::statement('ALTER TABLE users ADD COLUMN username VARCHAR(255) UNIQUE NULL');
+            echo \"Username column added manually.\";
+        } else {
+            echo \"Username column already exists.\";
+        }
+    " 2>/dev/null || echo "Could not check/add username column, continuing..."
+
+    # Seed only if users table is empty (first deploy)
+    USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
+    if [ "$USER_COUNT" = "0" ] || [ "$USER_COUNT" = "" ]; then
+        echo "No users found. Running seeders..."
+        php artisan db:seed --force 2>/dev/null || echo "Seeding failed, continuing..."
+    else
+        echo "Users already exist ($USER_COUNT). Skipping seeders."
+    fi
+    php artisan config:cache 2>/dev/null || echo "config:cache skipped"
+    php artisan route:cache 2>/dev/null || echo "route:cache skipped"
+    php artisan view:cache 2>/dev/null || echo "view:cache skipped"
 ) &
 
 # Start Apache in foreground (required for Render to detect the port)
