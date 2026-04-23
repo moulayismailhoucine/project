@@ -2,9 +2,20 @@
 
 cd /var/www/html
 
+# Generate a proper Laravel APP_KEY if not set or invalid
+if [ -z "$APP_KEY" ] || [[ ! "$APP_KEY" == base64:* ]]; then
+    echo "Generating Laravel APP_KEY..."
+    export APP_KEY=$(php artisan key:generate --show 2>/dev/null)
+    echo "APP_KEY generated: ${APP_KEY:0:20}..."
+fi
+
 echo "APP_KEY length: ${#APP_KEY}"
 echo "DB_CONNECTION: $DB_CONNECTION"
 echo "DATABASE_URL set: $(test -n "$DATABASE_URL" && echo 'yes' || echo 'no')"
+
+# Ensure storage and cache directories are writable
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build 2>/dev/null || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 # Run migrations and caches in the background so Apache can start immediately
 (
@@ -21,6 +32,20 @@ echo "DATABASE_URL set: $(test -n "$DATABASE_URL" && echo 'yes' || echo 'no')"
         echo "WARNING: Database not ready after 60 seconds. Migrations skipped."
     else
         echo "Migrations complete."
+
+        # Fix: Manually add username column if it still doesn't exist
+        echo "Checking for username column..."
+        php artisan tinker --execute="
+            use Illuminate\Support\Facades\DB;
+            use Illuminate\Support\Facades\Schema;
+            if (!Schema::hasColumn('users', 'username')) {
+                DB::statement('ALTER TABLE users ADD COLUMN username VARCHAR(255) UNIQUE NULL');
+                echo \"Username column added manually.\";
+            } else {
+                echo \"Username column already exists.\";
+            }
+        " 2>/dev/null || echo "Could not check/add username column, continuing..."
+
         # Seed only if users table is empty (first deploy)
         USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
         if [ "$USER_COUNT" = "0" ] || [ "$USER_COUNT" = "" ]; then
