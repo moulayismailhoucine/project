@@ -34,12 +34,12 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || 
         echo "Database is ready."
     fi
 
-    # Check if this is a fresh/empty database (no users)
-    USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
-    echo "User count: $USER_COUNT"
+    # Check if users table exists (safe check, no exception if missing)
+    HAS_USERS_TABLE=$(php artisan tinker --execute="echo Illuminate\Support\Facades\Schema::hasTable('users') ? 'YES' : 'NO';" 2>/dev/null || echo "NO")
+    echo "Has users table: $HAS_USERS_TABLE"
 
-    if [ "$USER_COUNT" = "0" ] || [ "$USER_COUNT" = "" ]; then
-        echo "Fresh database detected. Running migrate:fresh --force..."
+    if [ "$HAS_USERS_TABLE" != "YES" ]; then
+        echo "No users table found. Running migrate:fresh --force..."
         php artisan migrate:fresh --force 2>/dev/null && echo "Migrations fresh complete." || echo "migrate:fresh failed, trying migrate --force..."
         # If fresh failed, try normal migrate as fallback
         if [ $? -ne 0 ]; then
@@ -49,12 +49,14 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || 
         echo "Running seeders..."
         php artisan db:seed --force 2>/dev/null && echo "Seeding complete." || echo "Seeding failed, continuing..."
     else
+        USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
         echo "Existing database detected ($USER_COUNT users). Running migrate --force..."
         php artisan migrate --force 2>/dev/null && echo "Migrations complete." || echo "Migrations failed, continuing..."
     fi
 
     php artisan config:cache 2>/dev/null || echo "config:cache skipped"
-    php artisan route:cache 2>/dev/null || echo "route:cache skipped"
+    # Route cache disabled due to duplicate route name issue in app
+    # php artisan route:cache 2>/dev/null || echo "route:cache skipped"
     php artisan view:cache 2>/dev/null || echo "view:cache skipped"
 ) &
 
