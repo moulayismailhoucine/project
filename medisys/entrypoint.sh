@@ -21,6 +21,19 @@ echo "DATABASE_URL set: $(test -n "$DATABASE_URL" && echo 'yes' || echo 'no')"
         echo "WARNING: Database not ready after 60 seconds. Migrations skipped."
     else
         echo "Migrations complete."
+
+        # Fix: Manually add username column if it still doesn't exist
+        echo "Checking for username column..."
+        php artisan tinker --execute="
+            use Illuminate\Support\Facades\DB;
+            use Illuminate\Support\Facades\Schema;
+            if (!Schema::hasColumn('users', 'username')) {
+                DB::statement('ALTER TABLE users ADD COLUMN username VARCHAR(255) UNIQUE NULL');
+                echo \"Username column added manually.\";
+            } else {
+                echo \"Username column already exists.\";
+            }
+        " 2>/dev/null || echo "Could not check/add username column, continuing..."
         # Seed only if users table is empty (first deploy)
         USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
         if [ "$USER_COUNT" = "0" ] || [ "$USER_COUNT" = "" ]; then
