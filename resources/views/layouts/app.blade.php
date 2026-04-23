@@ -209,6 +209,216 @@ table.data-table tr:hover td { background: #fafbff; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* ========== MOBILE RESPONSIVE ========== */
+.mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 998;
+}
+
+.sidebar-overlay.active { display: block; }
+
+@media (max-width: 768px) {
+  .mobile-toggle { display: block; }
+
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    transition: left 0.3s ease;
+    z-index: 999;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+  }
+
+  .sidebar.open { left: 0; }
+
+  .main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .topbar {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .page-title { font-size: 16px; }
+
+  .page-content {
+    padding: 16px;
+    min-width: 0;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 16px;
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .card-header {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+
+  table.data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  table.data-table th,
+  table.data-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-control {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .user-card {
+    padding: 12px 16px;
+    margin: 8px 16px 16px;
+  }
+
+  .user-card .avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+  }
+
+  .user-name { font-size: 13px; }
+  .user-role { font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar-right .btn-text {
+    display: none;
+  }
+
+  .sidebar-nav {
+    padding: 8px 12px;
+  }
+
+  .nav-link {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .nav-link .icon {
+    width: 32px;
+  }
+
+  .nav-section-label {
+    padding: 12px 12px 8px;
+    font-size: 10px;
+  }
+
+  .sidebar-brand {
+    padding: 16px 12px;
+  }
+
+  .brand-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+
+  .brand-text {
+    font-size: 16px;
+  }
+
+  .brand-text span {
+    font-size: 9px;
+  }
+
+  .page-content {
+    padding: 12px;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) {
+  .nav-link:hover,
+  .btn:hover {
+    transform: none;
+  }
+
+  .stat-card:hover {
+    transform: none;
+  }
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden;
+}
+
+/* Table wrapper for horizontal scroll */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  height: 4px;
+}
 </style>
 @stack('styles')
 </head>
@@ -305,10 +515,16 @@ table.data-table tr:hover td { background: #fafbff; }
   </div>
 </aside>
 
+<!-- Mobile Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileNav()"></div>
+
 <!-- Main -->
 <div class="main">
   <header class="topbar" style="background: var(--card);">
     <div class="topbar-left">
+      <button class="mobile-toggle" onclick="toggleMobileNav()" aria-label="Toggle Navigation">
+        <i class="fas fa-bars"></i>
+      </button>
       <span class="page-title">@yield('page-title', __('Dashboard'))</span>
     </div>
     <div class="topbar-right">
@@ -380,6 +596,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const icon = document.querySelector('#theme-toggle i');
     if (icon) icon.className = 'fas fa-sun';
   }
+
+  // Mobile nav toggle
+  window.toggleMobileNav = function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+  };
+
+  window.closeMobileNav = function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+  };
+
+  // Close mobile nav when clicking nav links
+  document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+    link.addEventListener('click', closeMobileNav);
+  });
 
   if (user) {
     try {
