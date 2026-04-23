@@ -77,6 +77,96 @@ body {
 .alert { border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 16px; display: none; }
 .alert-error { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
 .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+/* ========== MOBILE RESPONSIVE ========== */
+@media (max-width: 768px) {
+  body { padding: 0; }
+  .login-container {
+    flex-direction: column;
+    max-width: 100%;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+  .login-left {
+    padding: 30px 24px;
+    min-height: auto;
+  }
+  .login-right {
+    padding: 30px 24px;
+    flex: none;
+  }
+  .login-brand h1 { font-size: 24px; }
+  .login-features { margin-top: 20px; }
+  .feature-item { margin-bottom: 14px; }
+  .login-footer { margin-top: 20px; }
+}
+
+@media (max-width: 480px) {
+  .login-left {
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .login-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .brand-logo {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+  .login-brand h1 { font-size: 22px; }
+  .login-brand p { font-size: 12px; }
+  .login-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .feature-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+    font-size: 11px;
+    margin-bottom: 0;
+  }
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  .login-right {
+    padding: 24px 20px;
+  }
+  .login-right h2 { font-size: 20px; }
+  .login-right p.sub { font-size: 13px; margin-bottom: 24px; }
+  .form-label { font-size: 12px; }
+  .form-control {
+    padding: 14px 14px 14px 42px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+  .btn-login, .nfc-btn {
+    padding: 14px;
+    font-size: 15px;
+    min-height: 48px;
+  }
+  .login-footer { font-size: 10px; }
+}
+
+@media (max-width: 360px) {
+  .login-left { padding: 20px 16px; }
+  .login-right { padding: 20px 16px; }
+  .login-features {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .feature-item {
+    flex-direction: row;
+    text-align: left;
+    gap: 12px;
+  }
+}
 </style>
 </head>
 <body>
