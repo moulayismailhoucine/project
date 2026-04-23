@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 FROM php:8.2-apache
 
 # Install system dependencies
@@ -8,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
-    libonig-dev \git add .gitattributes Dockerfile
+    libonig-dev \
     libxml2-dev \
     zip \
     unzip \
@@ -68,4 +65,3 @@ EXPOSE 80
 
 # Use entrypoint to run migrations then start Apache
 ENTRYPOINT ["/entrypoint.sh"]
->>>>>>> fa0194cea897d483d53d364d818683c72bfa86b1
