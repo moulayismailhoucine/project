@@ -8,6 +8,8 @@ use App\Models\Patient;
 use App\Models\Pharmacy;
 use App\Models\Laboratory;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
@@ -17,23 +19,23 @@ class DatabaseSeeder extends Seeder
             'name'     => 'System Administrator',
             'email'    => env('ADMIN_EMAIL', 'admin@shifa.local'),
             'username' => 'admin',
-            'password' => env('ADMIN_PASSWORD', 'Admin@1234'),
+            'password' => Hash::make(env('ADMIN_PASSWORD', 'Admin@1234')),
             'role'     => 'admin',
         ]);
 
         // ── Doctors ────────────────────────────────────────────────
         $doctorsData = [
-            ['name' => 'Dr. Ahmed Benali',  'email' => 'ahmed.benali@shifa.local',  'specialty' => 'Cardiologie'],
-            ['name' => 'Dr. Fatima Zohra',  'email' => 'fatima.zohra@shifa.local',  'specialty' => 'Pédiatrie'],
-            ['name' => 'Dr. Karim Hadj',    'email' => 'karim.hadj@shifa.local',    'specialty' => 'Neurologie'],
-            ['name' => 'Dr. Sara Meziane',  'email' => 'sara.meziane@shifa.local',  'specialty' => 'Dermatologie'],
+            ['name' => 'Dr. Ahmed Benali', 'email' => 'ahmed.benali@shifa.local', 'specialty' => 'Cardiologie'],
+            ['name' => 'Dr. Fatima Zohra', 'email' => 'fatima.zohra@shifa.local', 'specialty' => 'Pédiatrie'],
+            ['name' => 'Dr. Karim Hadj',   'email' => 'karim.hadj@shifa.local',   'specialty' => 'Neurologie'],
+            ['name' => 'Dr. Sara Meziane', 'email' => 'sara.meziane@shifa.local', 'specialty' => 'Dermatologie'],
         ];
 
         foreach ($doctorsData as $d) {
             $user = User::create([
                 'name'     => $d['name'],
                 'email'    => $d['email'],
-                'password' => 'Doctor@1234',
+                'password' => Hash::make('Doctor@1234'),
                 'role'     => 'doctor',
             ]);
             Doctor::create([
@@ -48,16 +50,16 @@ class DatabaseSeeder extends Seeder
             'name'     => 'Head Nurse Sarah',
             'email'    => 'nurse@shifa.local',
             'username' => 'nurse',
-            'password' => 'Nurse@1234',
+            'password' => Hash::make('Nurse@1234'),
             'role'     => 'nurse',
         ]);
 
         // ── Patients ───────────────────────────────────────────────
         $patients = [
-            ['name' => 'Mohammed Amine',  'age' => 34, 'gender' => 'male',   'nfc_uid' => 'NFC001ABC'],
-            ['name' => 'Aicha Mansouri',  'age' => 27, 'gender' => 'female', 'nfc_uid' => 'NFC002DEF'],
-            ['name' => 'Omar Belkacem',   'age' => 52, 'gender' => 'male',   'nfc_uid' => 'NFC003GHI'],
-            ['name' => 'Nadia Cherif',    'age' => 19, 'gender' => 'female', 'nfc_uid' => 'NFC004JKL'],
+            ['name' => 'Mohammed Amine', 'age' => 34, 'gender' => 'male',   'nfc_uid' => 'NFC001ABC'],
+            ['name' => 'Aicha Mansouri', 'age' => 27, 'gender' => 'female', 'nfc_uid' => 'NFC002DEF'],
+            ['name' => 'Omar Belkacem',  'age' => 52, 'gender' => 'male',   'nfc_uid' => 'NFC003GHI'],
+            ['name' => 'Nadia Cherif',   'age' => 19, 'gender' => 'female', 'nfc_uid' => 'NFC004JKL'],
         ];
 
         foreach ($patients as $p) {
@@ -67,7 +69,7 @@ class DatabaseSeeder extends Seeder
             ]));
         }
 
-        // ── Pharmacies (email + password login) ────────────────────
+        // ── Pharmacies ─────────────────────────────────────────────
         $pharmacies = [
             [
                 'name'     => 'Pharmacie Al Shifa',
@@ -92,7 +94,7 @@ class DatabaseSeeder extends Seeder
                 'name'     => $ph['name'],
                 'email'    => $ph['email'],
                 'username' => $ph['username'],
-                'password' => $ph['password'],
+                'password' => Hash::make($ph['password']),
                 'role'     => 'pharmacy',
             ]);
             Pharmacy::create([
@@ -104,7 +106,7 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // ── Laboratories (email + password login) ──────────────────
+        // ── Laboratories ───────────────────────────────────────────
         $labs = [
             [
                 'name'           => 'Laboratoire Bio-Médical',
@@ -129,7 +131,7 @@ class DatabaseSeeder extends Seeder
                 'name'     => $lb['name'],
                 'email'    => $lb['email'],
                 'username' => $lb['username'],
-                'password' => $lb['password'],
+                'password' => Hash::make($lb['password']),
                 'role'     => 'lab',
             ]);
             Laboratory::create([
