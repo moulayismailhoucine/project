@@ -60,4 +60,4 @@ RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 EXPOSE 80
 
 # Run migrations then start Apache (no shell script needed)
-CMD ["/bin/bash", "-c", "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && i=0; while [ $i -lt 30 ]; do php artisan migrate --force && break; echo 'Retrying in 3s...'; sleep 3; i=$((i+1)); done && php artisan db:seed --force 2>/dev/null || true; php artisan config:cache 2>/dev/null || true; apache2-foreground"]
+CMD ["/bin/bash", "-c", "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && i=0; while [ $i -lt 30 ]; do php artisan migrate:fresh --force && php artisan db:seed --force && break; echo 'Retrying in 3s...'; sleep 3; i=$((i+1)); done; php artisan config:cache 2>/dev/null || true; apache2-foreground"]
