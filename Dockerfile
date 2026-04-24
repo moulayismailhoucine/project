@@ -50,7 +50,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Update Apache DocumentRoot to point to Laravel's public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
