@@ -35,22 +35,18 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Build Node assets (needs resources/ to exist)
+# Build Node assets
 RUN npm run build
 
-# Run composer autoload (safe at build time — no env needed)
+# Run composer autoload
 RUN composer dump-autoload --optimize
 
 # Remove .env to avoid conflicts with Render environment variables
 RUN rm -f .env .env.example
 
-# Fix permissions for storage, bootstrap/cache, and public/build
+# Fix permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/build \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Copy entrypoint script
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/bin/bash", "-c", "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && i=0; while [ $i -lt 30 ]; do php artisan migrate --force 2>/dev/null && break; echo 'DB not ready, retrying...'; sleep 3; i=$((i+1)); done && php artisan db:seed --force 2>/dev/null; php artisan config:cache 2>/dev/null; apache2-foreground"]
 
 # Update Apache DocumentRoot to point to Laravel's public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
@@ -63,5 +59,5 @@ RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 # Expose port 80
 EXPOSE 80
 
-# Use entrypoint to run migrations then start Apache
-ENTRYPOINT ["/entrypoint.sh"]
+# Run migrations then start Apache (no shell script needed)
+CMD ["/bin/bash", "-c", "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && i=0; while [ $i -lt 30 ]; do php artisan migrate --force && break; echo 'Retrying in 3s...'; sleep 3; i=$((i+1)); done && php artisan db:seed --force 2>/dev/null || true; php artisan config:cache 2>/dev/null || true; apache2-foreground"]
