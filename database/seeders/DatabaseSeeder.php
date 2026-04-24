@@ -8,8 +8,6 @@ use App\Models\Patient;
 use App\Models\Pharmacy;
 use App\Models\Laboratory;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
@@ -19,7 +17,7 @@ class DatabaseSeeder extends Seeder
             'name'     => 'System Administrator',
             'email'    => env('ADMIN_EMAIL', 'admin@shifa.local'),
             'username' => 'admin',
-            'password' => Hash::make(env('ADMIN_PASSWORD', 'Admin@1234')),
+            'password' => env('ADMIN_PASSWORD', 'Admin@1234'),
             'role'     => 'admin',
         ]);
 
@@ -35,7 +33,7 @@ class DatabaseSeeder extends Seeder
             $user = User::create([
                 'name'     => $d['name'],
                 'email'    => $d['email'],
-                'password' => Hash::make('Doctor@1234'),
+                'password' => 'Doctor@1234',
                 'role'     => 'doctor',
             ]);
             Doctor::create([
@@ -50,7 +48,7 @@ class DatabaseSeeder extends Seeder
             'name'     => 'Head Nurse Sarah',
             'email'    => 'nurse@shifa.local',
             'username' => 'nurse',
-            'password' => Hash::make('Nurse@1234'),
+            'password' => 'Nurse@1234',
             'role'     => 'nurse',
         ]);
 
@@ -94,7 +92,7 @@ class DatabaseSeeder extends Seeder
                 'name'     => $ph['name'],
                 'email'    => $ph['email'],
                 'username' => $ph['username'],
-                'password' => Hash::make($ph['password']),
+                'password' => $ph['password'],
                 'role'     => 'pharmacy',
             ]);
             Pharmacy::create([
@@ -131,7 +129,7 @@ class DatabaseSeeder extends Seeder
                 'name'     => $lb['name'],
                 'email'    => $lb['email'],
                 'username' => $lb['username'],
-                'password' => Hash::make($lb['password']),
+                'password' => $lb['password'],
                 'role'     => 'lab',
             ]);
             Laboratory::create([
