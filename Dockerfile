@@ -49,8 +49,8 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r//' /entrypoint.sh && chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/bin/bash", "-c", "chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && i=0; while [ $i -lt 30 ]; do php artisan migrate --force 2>/dev/null && break; echo 'DB not ready, retrying...'; sleep 3; i=$((i+1)); done && php artisan db:seed --force 2>/dev/null; php artisan config:cache 2>/dev/null; apache2-foreground"]
 
 # Update Apache DocumentRoot to point to Laravel's public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
